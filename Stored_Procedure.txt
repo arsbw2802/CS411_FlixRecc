@@ -1,0 +1,99 @@
+DELIMITER //
+
+
+CREATE PROCEDURE mostPopular()
+BEGIN
+DECLARE varMovieID varchar(256) ;
+DECLARE varMovieName varchar(256);
+DECLARE varMovieCount INT;
+DECLARE varMoviePop varchar(256);
+
+DECLARE varTvID varchar(256) ;
+DECLARE varTvName varchar(256);
+DECLARE varTvCount INT;
+DECLARE varTvPop varchar(256);
+
+DECLARE movieCursor CURSOR FOR (SELECT m.titleId, m.title, COUNT(tw.UserId) as MovieCount
+							   FROM ToWatchList tw JOIN Movies m ON m.titleId = tw.EntertainmentId
+                               GROUP BY m.titleId);
+
+DECLARE tvCursor CURSOR FOR (SELECT t.titleId, t.title, COUNT(tw.UserId) as TvCount
+							   FROM ToWatchList tw JOIN TV t ON t.titleId = tw.EntertainmentId
+                               GROUP BY t.titleId);
+
+DROP TABLE IF EXISTS moviePopTable;
+DROP TABLE IF EXISTS tvPopTable;
+
+CREATE TABLE moviePopTable (
+	movieName varchar(256) Primary Key,
+    movieCount INT,
+    moviePop varchar(256)
+);
+
+CREATE TABLE tvPopTable (
+	tvName varchar(256) Primary Key,
+    tvCount INT,
+    tvPop varchar(256)
+);
+
+OPEN movieCursor;
+BEGIN
+
+DECLARE loop_exit BOOLEAN DEFAULT FALSE;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET loop_exit = TRUE;
+cloop: LOOP
+
+FETCH movieCursor INTO varMovieID, varMovieName, varMovieCount;
+
+IF varMovieID = NULL THEN
+LEAVE cloop;
+ELSEIF loop_exit THEN
+LEAVE cloop;
+END IF;
+
+IF varMovieCount > 4 THEN
+SET varMoviePop = "FIRE";
+ELSEIF varMovieCount >= 3 THEN
+SET varMoviePop = "MID";
+ELSE
+SET varMoviePop = "STANK";
+END IF;
+
+INSERT IGNORE INTO moviePopTable VALUES(varMovieName, varMovieCount, varMoviePop);
+END LOOP cloop;
+
+END;
+CLOSE movieCursor;
+
+
+
+OPEN tvCursor;
+BEGIN
+
+DECLARE loop_exit BOOLEAN DEFAULT FALSE;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET loop_exit = TRUE;
+cloop: LOOP
+
+FETCH tvCursor INTO varTvID, varTvName, varTvCount;
+
+IF varTvID = NULL THEN
+LEAVE cloop;
+ELSEIF loop_exit THEN
+LEAVE cloop;
+END IF;
+
+IF varTvCount > 4 THEN
+SET varTvPop = "FIRE";
+ELSEIF varTvCount >= 3 THEN
+SET varTvPop = "MID";
+ELSE
+SET varTvPop = "STANK";
+END IF;
+
+INSERT IGNORE INTO tvPopTable VALUES(varTvName, varTvCount, varTvPop);
+END LOOP cloop;
+
+END;
+CLOSE tvCursor;
+
+END;

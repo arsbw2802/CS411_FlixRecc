@@ -1,0 +1,12 @@
+DELIMITER // 
+CREATE TRIGGER CreateUser
+	AFTER INSERT ON UserLogin
+	FOR EACH ROW
+BEGIN
+	IF (NEW.age > 17) THEN
+		INSERT INTO UserProfile(UserId, UserName) VALUES(CONCAT("1", NEW.UserName), NEW.UserName);
+	ELSE
+		INSERT INTO UserProfile(UserId, UserName) VALUES(CONCAT("0", NEW.userName), NEW.UserName);
+    END IF; 	
+END;//
+DELIMITER ;
